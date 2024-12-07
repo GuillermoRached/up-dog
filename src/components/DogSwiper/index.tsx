@@ -1,67 +1,43 @@
 'use client'
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image'
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, X, PawPrint, Baby, Dumbbell, Home, Sun, Coffee } from 'lucide-react';
-import { Dog, DogTrait, DogTraitDisplay, getTraitIcon } from '@/types';
+import { Dog, DogTraitDisplay, getTraitIcon } from '@/types';
 
 const DogSwiper = () => {
-    const [dogs] = useState<Dog[]>([
-        {
-            id: 1,
-            name: "Jackson",
-            age: 5,
-            image: "/dogs/jackson_teefs.jpg",
-            traits: [DogTrait.KID_FRIENDLY, DogTrait.GOOD_WITH_CATS, DogTrait.HIGH_ENERGY],
-            description: "Jackson is the emperor of the universe and he knows it.",
-            compatibility: 150
-        },
-        {
-            id: 2,
-            name: "Luci",
-            age: 3,
-            image: "/dogs/luci_what.jpg",
-            traits: [DogTrait.CALM, DogTrait.GOOD_WITH_DOGS, DogTrait.OUTDOOR_ENTHUSIAST, DogTrait.APARTMENT_FRIENDLY],
-            description: "Luci is a home-grown couch 'tator. Looking for all the great and comfy couches out there.",
-            compatibility: 150
-        },
-        {
-            id: 3,
-            name: "Zeus",
-            age: 3,
-            image: "/dogs/big_ovcharka.jpg",
-            traits: [DogTrait.CALM, DogTrait.GOOD_WITH_DOGS, DogTrait.OUTDOOR_ENTHUSIAST, DogTrait.APARTMENT_FRIENDLY],
-            description: "Zeus is a home-grown couch 'tator. Looking for all the great and comfy couches out there.",
-            compatibility: 75
-        },
-        {
-            id: 4,
-            name: "Luci",
-            age: 3,
-            image: "/dogs/luci_what.jpg",
-            traits: [DogTrait.CALM, DogTrait.GOOD_WITH_DOGS, DogTrait.OUTDOOR_ENTHUSIAST, DogTrait.APARTMENT_FRIENDLY],
-            description: "Luci is a home-grown couch 'tator. Looking for all the great and comfy couches out there.",
-            compatibility: 55
-        },
-        {
-            id: 5,
-            name: "Luci",
-            age: 3,
-            image: "/dogs/luci_what.jpg",
-            traits: [DogTrait.CALM, DogTrait.GOOD_WITH_DOGS, DogTrait.OUTDOOR_ENTHUSIAST, DogTrait.APARTMENT_FRIENDLY],
-            description: "Luci is a home-grown couch 'tator. Looking for all the great and comfy couches out there.",
-            compatibility: 95
-        },
-    ]);
-
+    const [dogs, setDogs] = useState<Dog[]>([]);
     const [currentDogIndex, setCurrentDogIndex] = useState(0);
     const [matches, setMatches] = useState<Dog[]>([]);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
     const [dragDelta, setDragDelta] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [page, setPage] = useState(1);
     const cardRef = useRef<HTMLDivElement>(null);
+
+    const fetchDogs = async () => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+        try {
+            const response = await fetch(`/api/dogs?page=${page}&limit=10`);
+            const newDogs = await response.json();
+            setDogs(prevDogs => [...prevDogs, ...newDogs]);
+            setPage(prev => prev + 1);
+        } catch (error) {
+            console.error('Error fetching dogs:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Initial fetch
+    useEffect(() => {
+        fetchDogs();
+    });
 
     const handleSwipe = (liked: boolean) => {
         if (currentDogIndex >= dogs.length) return;
@@ -134,6 +110,14 @@ const DogSwiper = () => {
 
     const currentDog = dogs[currentDogIndex];
 
+    if (dogs.length === 0) {
+        return (
+            <div className="flex justify-center items-center h-64">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+        );
+    }
+
     if (!currentDog) {
         return (
             <Card className="text-center p-6 max-w-md mx-auto">
@@ -145,13 +129,12 @@ const DogSwiper = () => {
                                 <Image
                                     src={dog.image}
                                     alt={dog.name}
-                                    width={500}
-                                    height={500}
+                                    fill
                                     className="w-16 h-16 rounded-full object-cover"
                                 />
                                 <div className="text-left">
                                     <h3 className="font-semibold">{dog.name}</h3>
-                                    <p className="text-sm text-gray-600">100% Match</p>
+                                    <p className="text-sm text-gray-600">{dog.compatibility}% Match</p>
                                 </div>
                             </div>
                         ))}
@@ -200,20 +183,22 @@ const DogSwiper = () => {
                 >
                     <Card>
                         <CardHeader className="p-0">
-                            <Image
-                                src={currentDog.image}
-                                alt={currentDog.name}
-                                width={500}
-                                height={500}
-                                className="w-full h-64 object-cover rounded-t-lg"
-                                draggable={false}
-                            />
+                            <div className="relative w-full h-64 bg-gray-100">
+                                <Image
+                                    src={currentDog.image}
+                                    alt={currentDog.name}
+                                    fill
+                                    className="object-contain rounded-t-lg"
+                                    draggable={false}
+                                    priority={true}
+                                />
+                            </div>
                         </CardHeader>
                         <CardContent className="p-4">
                             <div className="flex justify-between items-center mb-2">
                                 <h2 className="text-xl font-bold">{currentDog.name}, {currentDog.age}</h2>
                                 <span className="text-green-500 font-semibold">
-                                    100% Match
+                                    {currentDog.compatibility}% Match
                                 </span>
                             </div>
 
