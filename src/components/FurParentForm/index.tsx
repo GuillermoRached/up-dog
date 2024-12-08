@@ -1,132 +1,195 @@
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dog, Heart, Home, Clock, Dumbbell } from 'lucide-react';
+import { Profile, useProfile } from '@/context/ProfileContext';
+import LoadingScreen from '../LoadingScreen';
 
-const FurParentForm = () => {
-  const [step, setStep] = useState(0);
-  const [preferences, setPreferences] = useState({
-    experience: null,
-    housing: null,
-    activity: null,
-    hours: null
-  });
-  
-  const questions = [
-    {
-      title: "What's your experience with dogs?",
-      options: [
-        { icon: <Dog className="mb-2" size={24} />, label: "First-time owner", value: "beginner" },
-        { icon: <Dog className="mb-2" size={24} />, label: "Had dogs before", value: "intermediate" },
-        { icon: <Dog className="mb-2" size={24} />, label: "Very experienced", value: "expert" }
-      ],
-      key: "experience"
-    },
-    {
-      title: "What's your living situation?",
-      options: [
-        { icon: <Home className="mb-2" size={24} />, label: "Apartment", value: "apartment" },
-        { icon: <Home className="mb-2" size={24} />, label: "House with yard", value: "house" }
-      ],
-      key: "housing"
-    },
-    {
-      title: "How active is your lifestyle?",
-      options: [
-        { icon: <Dumbbell className="mb-2" size={24} />, label: "Relaxed", value: "low" },
-        { icon: <Dumbbell className="mb-2" size={24} />, label: "Moderate", value: "medium" },
-        { icon: <Dumbbell className="mb-2" size={24} />, label: "Very active", value: "high" }
-      ],
-      key: "activity"
-    },
-    {
-      title: "How many hours will the dog be alone?",
-      options: [
-        { icon: <Clock className="mb-2" size={24} />, label: "2-4 hours", value: "short" },
-        { icon: <Clock className="mb-2" size={24} />, label: "4-8 hours", value: "medium" },
-        { icon: <Clock className="mb-2" size={24} />, label: "8+ hours", value: "long" }
-      ],
-      key: "hours"
+interface QuestionOption {
+    label: string;
+    value: string;
+}
+
+interface Question {
+    title: string;
+    field: keyof Profile;
+    type: 'text' | 'select' | 'boolean';
+    options?: QuestionOption[];
+}
+
+export default function ParentForm() {
+    const router = useRouter();
+    const { setProfile } = useProfile();
+    const [step, setStep] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        lifestyle: '',
+        homeType: '',
+        hasChildren: false,
+        hasPets: false,
+        experience: '',
+        preferredSize: ''
+    });
+
+    const handleSubmit = async () => {
+        setIsLoading(true)
+        setProfile(formData as Profile);
+        // Wait for next tick to ensure state is updated
+        await new Promise(resolve => setTimeout(resolve, 0));
+        router.push('/match');
+    };
+
+    const questions: Question[] = [
+        {
+            title: "What is your name?",
+            field: 'name',
+            type: 'text'
+        },
+        {
+            title: "Where do you live?",
+            field: 'homeType',
+            type: 'select',
+            options: [
+                { label: 'Apartment', value: 'apartment' },
+                { label: 'House', value: 'house' },
+            ]
+        },
+        {
+            title: "How much experience do you have with dogs?",
+            field: 'experience',
+            type: 'select',
+            options: [
+                { label: 'First Time', value: 'first-time' },
+                { label: 'Some', value: 'some' },
+                { label: 'Experienced', value: 'experienced' }
+            ]
+        },
+        {
+            title: "What's your lifestyle like?",
+            field: 'lifestyle',
+            type: 'select',
+            options: [
+                { label: 'Relaxed', value: 'relaxed' },
+                { label: 'Moderately Active', value: 'moderate' },
+                { label: 'Very Active', value: 'active' }
+            ]
+        },
+        {
+            title: "Do you have any children?",
+            field: 'hasChildren',
+            type: 'boolean',
+        },
+        {
+            title: "Do you currently have any pets?",
+            field: 'hasPets',
+            type: 'boolean',
+        },
+        {
+            title: "What is your preferred dog size?",
+            field: 'preferredSize',
+            type: 'select',
+            options: [
+                { label: 'Small', value: "small" },
+                { label: 'Medium', value: "medium" },
+                { label: 'Large', value: "large" },
+                { label: 'Any', value: "any" },
+            ]
+        },
+    ];
+
+    const currentQuestion = questions[step];
+
+    if (!currentQuestion) {
+        return null;
     }
-  ];
 
-  const handleSelect = (key, value) => {
-    setPreferences(prev => ({
-      ...prev,
-      [key]: value
-    }));
-    if (step < questions.length - 1) {
-      setStep(step + 1);
+    if (isLoading) {
+        return (
+            <LoadingScreen />
+        )
     }
-  };
 
-  const currentQuestion = questions[step];
-
-  const getMatchingResults = () => {
-    // This would normally call an API with the preferences
-    // For demo purposes, we'll show a simple result
     return (
-      <div className="text-center p-4">
-        <Heart className="mx-auto mb-4" size={48} color="#e11d48" />
-        <h3 className="text-xl font-semibold mb-2">We've Found Your Matches!</h3>
-        <p className="mb-4">Based on your preferences, here are some dogs you might love:</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-4">
-            <img src="/api/placeholder/300/200" alt="Dog" className="rounded-lg mb-2" />
-            <h4 className="font-semibold">Luna</h4>
-            <p className="text-sm">A gentle 2-year-old Lab mix perfect for first-time owners</p>
-          </Card>
-          <Card className="p-4">
-            <img src="/api/placeholder/300/200" alt="Dog" className="rounded-lg mb-2" />
-            <h4 className="font-semibold">Max</h4>
-            <p className="text-sm">An active 3-year-old Shepherd who loves apartment living</p>
-          </Card>
-        </div>
-      </div>
+        <Card className="w-full dark:bg-gray-800">
+            <CardHeader>
+                <h1 className="text-2xl font-bold text-center dark:text-white">
+                    Let&apos;s Find Your Perfect Match
+                </h1>
+            </CardHeader>
+            <CardContent>
+            <div className="space-y-4">
+                <h2 className="text-xl dark:text-white">{currentQuestion.title}</h2>
+
+                {currentQuestion.type === 'text' ? (
+                    <input
+                        type="text"
+                        value={formData[currentQuestion.field] as string}
+                        onChange={(e) =>
+                            setFormData({ ...formData, [currentQuestion.field]: e.target.value })
+                        }
+                        className="w-full p-2 rounded border dark:bg-gray-700 dark:text-white"
+                    />
+                ) : currentQuestion.type === 'boolean' ? (
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button
+                            variant={formData[currentQuestion.field] === true ? "default" : "outline"}
+                            onClick={() =>
+                                setFormData({ ...formData, [currentQuestion.field]: true })
+                            }
+                            className="w-full"
+                        >
+                            Yes
+                        </Button>
+                        <Button
+                            variant={formData[currentQuestion.field] === false ? "default" : "outline"}
+                            onClick={() =>
+                                setFormData({ ...formData, [currentQuestion.field]: false })
+                            }
+                            className="w-full"
+                        >
+                            No
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="grid gap-2">
+                        {currentQuestion.options?.map((option) => (
+                            <Button
+                                key={option.value}
+                                variant={formData[currentQuestion.field] === option.value ?
+                                    "default" : "outline"}
+                                onClick={() =>
+                                    setFormData({ ...formData, [currentQuestion.field]: option.value })
+                                }
+                                className="w-full"
+                            >
+                                {option.label}
+                            </Button>
+                        ))}
+                    </div>
+                )}
+
+                    <div className="flex justify-between mt-4">
+                        <Button
+                            onClick={() => setStep(Math.max(0, step - 1))}
+                            disabled={step === 0}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (step === questions.length - 1) {
+                                    handleSubmit();
+                                } else {
+                                    setStep(step + 1);
+                                }
+                            }}
+                        >
+                            {step === questions.length - 1 ? 'Find Matches' : 'Next'}
+                        </Button>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
-  };
-
-  return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-center">Find Your Perfect Canine Companion</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {step < questions.length ? (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-center mb-6">{currentQuestion.title}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {currentQuestion.options.map((option, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="p-6 h-auto flex flex-col items-center justify-center text-center"
-                  onClick={() => handleSelect(currentQuestion.key, option.value)}
-                >
-                  {option.icon}
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-            <div className="flex justify-between mt-6">
-              <Button 
-                variant="outline"
-                onClick={() => setStep(Math.max(0, step - 1))}
-                disabled={step === 0}
-              >
-                Previous
-              </Button>
-              <div className="text-sm text-gray-500">
-                Step {step + 1} of {questions.length}
-              </div>
-            </div>
-          </div>
-        ) : (
-          getMatchingResults()
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-export default FurParentForm;
+}
