@@ -6,11 +6,18 @@ import { Dog, DogTrait } from '@/types';
 
 const localImages = [
   '/dogs/big_ovcharka.jpg',
+  '/dogs/jackson_derp.jpg',
+  '/dogs/jackson_luci_fear.jpg',
   '/dogs/jackson_smile_on_rock.jpg',
   '/dogs/jackson_teefs.jpg',
+  '/dogs/jackson_walking_bridge.jpg',
   '/dogs/luci_and_jackson_on_rock.jpg',
   '/dogs/luci_smile.jpg',
+  '/dogs/luci_treat.jpg',
   '/dogs/luci_what.jpg',
+  '/dogs/mystical_jackson.jpg',
+  '/dogs/ninja_jackson.jpg',
+  '/dogs/small_gangster.jpg',
   '/dogs/terrier_park.jpg',
   '/dogs/wolf_hound.jpg',
 ];
